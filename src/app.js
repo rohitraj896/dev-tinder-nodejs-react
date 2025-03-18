@@ -3,22 +3,58 @@ const connectDB = require("./config/database");
 const app = express();
 
 const User = require("./models/user");
+const { validateSignUpData } = require("./utils/validation");
+const bcrypt = require("bcrypt");
 
 app.use(express.json());
 
 // post sign user
 
 app.post("/signup", async (req, res) => {
-  const user = new User(req.body);
+  // validation of data
 
   try {
+    validateSignUpData(req);
+    const { firstName, lastName, emailId, password } = req.body;
+
+    const passwordHash = await bcrypt.hash(password, 10);
+    console.log(passwordHash);
+    const user = new User({
+      firstName,
+      lastName,
+      emailId,
+      password: passwordHash,
+    });
+
     await user.save();
     res.send("User added successfully");
   } catch (error) {
-    res.status(400).send("Error saving the user:" + error.message);
+    res.status(400).send("Error :" + error.message);
   }
 });
 
+// login user
+
+app.post("/login", async (req, res) => {
+  try {
+    const { emailId, password } = req.body;
+
+    const user = User.findOne({ emailId: emailId });
+
+    if (!user) {
+      throw new Error("Email id is not present in db");
+    }
+    const isPasswordValid = bcrypt.compare(password, user.password);
+
+    if (isPasswordValid) {
+      res.send("User login successful");
+    } else {
+      throw new Error("password is not correct");
+    }
+  } catch (error) {
+    res.status(400).send("Error :" + error.message);
+  }
+});
 // get user
 app.get("/user", async (req, res) => {
   const userEmail = req.body.emailId;

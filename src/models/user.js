@@ -52,7 +52,7 @@ const userSchema = new mongoose.Schema(
     },
     photoUrl: {
       type: String,
-      default: "http://",
+      default: "https://www.w3schools.com/html/pic_trulli.jpg",
       validate(value) {
         if (!validator.isURL(value)) {
           throw new Error("Invalid photo url", value);
