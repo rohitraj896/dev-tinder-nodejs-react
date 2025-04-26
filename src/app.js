@@ -5,9 +5,10 @@ const app = express();
 const User = require("./models/user");
 const { validateSignUpData } = require("./utils/validation");
 const bcrypt = require("bcrypt");
+const cookieParser = require("cookie-parser");
 
 app.use(express.json());
-
+app.use(cookieParser());
 // post sign user
 
 app.post("/signup", async (req, res) => {
@@ -47,6 +48,7 @@ app.post("/login", async (req, res) => {
     const isPasswordValid = bcrypt.compare(password, user.password);
 
     if (isPasswordValid) {
+      res.cookie("token", "asdfghjkl");
       res.send("User login successful");
     } else {
       throw new Error("password is not correct");
@@ -54,6 +56,12 @@ app.post("/login", async (req, res) => {
   } catch (error) {
     res.status(400).send("Error :" + error.message);
   }
+});
+
+app.get("/profile", async (req, res) => {
+  const cookies = req.cookies;
+  console.log(cookies);
+  res.send("Reading cookies");
 });
 // get user
 app.get("/user", async (req, res) => {
