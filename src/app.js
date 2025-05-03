@@ -6,7 +6,7 @@ const User = require("./models/user");
 const { validateSignUpData } = require("./utils/validation");
 const bcrypt = require("bcrypt");
 const cookieParser = require("cookie-parser");
-
+const jwt = require("jsonwebtoken");
 app.use(express.json());
 app.use(cookieParser());
 // post sign user
@@ -40,15 +40,18 @@ app.post("/login", async (req, res) => {
   try {
     const { emailId, password } = req.body;
 
-    const user = User.findOne({ emailId: emailId });
+    const user = await User.findOne({ emailId: emailId });
 
     if (!user) {
       throw new Error("Email id is not present in db");
     }
-    const isPasswordValid = bcrypt.compare(password, user.password);
+    const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (isPasswordValid) {
-      res.cookie("token", "asdfghjkl");
+      // create jwt token
+      const token = await jwt.sign({ _id: user._id }, "DEV@TINDER$790");
+      console.log(token);
+      res.cookie("token", token);
       res.send("User login successful");
     } else {
       throw new Error("password is not correct");
@@ -59,9 +62,27 @@ app.post("/login", async (req, res) => {
 });
 
 app.get("/profile", async (req, res) => {
-  const cookies = req.cookies;
-  console.log(cookies);
-  res.send("Reading cookies");
+  try {
+    const cookies = req.cookies;
+
+    const { token } = cookies;
+    if (!token) {
+      throw new Error("token not found");
+    }
+
+    const decoded = jwt.verify(token, "DEV@TINDER$790");
+    console.log(decoded);
+    const { _id } = decoded;
+
+    const user = await User.findById(_id);
+    if (!user) {
+      throw new Error("user not found");
+    } else {
+      res.send(user);
+    }
+  } catch (error) {
+    res.status(400).send("Error :" + error.message);
+  }
 });
 // get user
 app.get("/user", async (req, res) => {
