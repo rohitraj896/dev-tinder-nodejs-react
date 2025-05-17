@@ -6,15 +6,11 @@ const User = require("./models/user");
 const { validateSignUpData } = require("./utils/validation");
 const bcrypt = require("bcrypt");
 const cookieParser = require("cookie-parser");
-const jwt = require("jsonwebtoken");
 const { userAuth } = require("./middlewares/auth");
 app.use(express.json());
 app.use(cookieParser());
-// post sign user
 
 app.post("/signup", async (req, res) => {
-  // validation of data
-
   try {
     validateSignUpData(req);
     const { firstName, lastName, emailId, password } = req.body;
@@ -45,15 +41,13 @@ app.post("/login", async (req, res) => {
     if (!user) {
       throw new Error("Email id is not present in db");
     }
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    const isPasswordValid = await user.validatePassword(password);
 
     if (isPasswordValid) {
-      // create jwt token
-      const token = await jwt.sign({ _id: user._id }, "DEV@TINDER$790", {
-        expiresIn: "0d",
-      });
+      const token = await user.getJWT();
+
       res.cookie("token", token, {
-        expires: new Date(Date().now + 8 * 3600000),
+        expiresIn: new Date(Date().now + 8 * 3600000),
       });
       res.send("User login successful");
     } else {
