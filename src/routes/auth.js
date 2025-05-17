@@ -7,7 +7,17 @@ const bcrypt = require("bcrypt");
 authRouter.post("/signup", async (req, res) => {
   try {
     validateSignUpData(req);
-    const { firstName, lastName, emailId, password } = req.body;
+    const {
+      firstName,
+      lastName,
+      emailId,
+      password,
+      age,
+      gender,
+      photoUrl,
+      about,
+      skills,
+    } = req.body;
 
     const passwordHash = await bcrypt.hash(password, 10);
     const user = new User({
@@ -15,6 +25,11 @@ authRouter.post("/signup", async (req, res) => {
       lastName,
       emailId,
       password: passwordHash,
+      age,
+      gender,
+      photoUrl,
+      about,
+      skills,
     });
 
     await user.save();
@@ -48,6 +63,13 @@ authRouter.post("/login", async (req, res) => {
   } catch (error) {
     res.status(400).send("Error :" + error.message);
   }
+});
+
+authRouter.post("/logout", async (req, res) => {
+  res.cookie("token", null, {
+    expiresIn: new Date(Date.now()),
+  });
+  res.send("Logout successfull!!!");
 });
 
 module.exports = authRouter;
